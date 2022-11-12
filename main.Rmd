@@ -1,0 +1,54 @@
+---
+title: "ST558- Project 3"
+author: "Rohan Prabhune, Manan Shah"
+output: 
+  github_document:
+    toc: true
+    toc_depth: 2
+always_allow_html: true
+---
+```{r Temp1,echo=FALSE,eval=TRUE,message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,warning=FALSE) 
+```
+
+# Loading the necessary packages
+```{r packages}
+library(tidyverse)
+library(caret)
+```
+
+# Reading the data:
+*Citation for the dataset:  
+K. Fernandes, P. Vinagre and P. Cortez. A Proactive Intelligent Decision
+Support System for Predicting the Popularity of Online News. Proceedings
+of the 17th EPIA 2015 - Portuguese Conference on Artificial Intelligence,
+September, Coimbra, Portugal.*
+
+```{r Data}
+#Reading the data
+dataset <- read_csv("data/OnlineNewsPopularity.csv",show_col_types=FALSE) 
+```
+
+# Pre-processing:  
+
+## Subset data based on type of article
+```{r preprocessing}
+# Vector of columns other than data_channel_is*
+remaining_cols = c(names(dataset))[c(1:13,20:61)]
+# Subset based on type of article
+input_data_channel = "entertainment"
+select_var = paste0("data_channel_is_",input_data_channel)
+subset_cols = append(remaining_cols,select_var)
+# Subset data
+df <- dataset %>% select(all_of(subset_cols)) %>%
+  filter(dataset[select_var] == 1) %>%
+  select(all_of(remaining_cols))
+```
+
+## Variable selection
+```{r preprocessing2}
+#Remove url and timedelta
+# Remove "weekday_is_saturday" and "weekday_is_sunday" to only keep "is_weekend"
+df <- df %>% select(-url,-timedelta,-weekday_is_saturday,-weekday_is_sunday)
+df
+```
