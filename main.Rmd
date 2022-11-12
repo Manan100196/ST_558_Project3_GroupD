@@ -1,5 +1,5 @@
 ---
-title: "ST558- Project 3"
+title: "Project 3: Predicting online news popularity"
 author: "Rohan Prabhune, Manan Shah"
 output: 
   github_document:
@@ -15,6 +15,9 @@ knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,war
 ```{r packages}
 library(tidyverse)
 library(caret)
+library(kableExtra)
+library(corrplot)
+library(timereg)
 ```
 
 # Reading the data:
@@ -31,12 +34,10 @@ dataset
 ```
 
 # Pre-processing:  
-
 ## Subset data based on type of article
 ```{r preprocessing}
 # Vector of columns other than data_channel_is*
 remaining_cols = c(names(dataset))[c(1:13,20:61)]
-remaining_cols
 # Subset based on type of article
 input_data_channel = "entertainment"
 select_var = paste0("data_channel_is_",input_data_channel)
@@ -45,24 +46,36 @@ subset_cols = append(remaining_cols,select_var)
 df <- dataset %>% select(all_of(subset_cols)) %>%
   filter(dataset[select_var] == 1) %>%
   select(all_of(remaining_cols))
+```
+
+Removing url and timedelta as they are non-predictive variables.
+Filter the tibble based on n_tokens_content and n_tokens_title that is, where number of words in the content and title are not zero.  
+```{r preprocessing2}
+#Remove url and timedelta and filter on data
+df <- df %>% select(-url,-timedelta) %>% filter(n_tokens_content!=0,n_tokens_title!=0)
 df
 ```
 
-## Variable selection
-```{r preprocessing2}
-#Remove url and timedelta
-# Remove "weekday_is_saturday" and "weekday_is_sunday" to only keep "is_weekend"
-df <- df %>% select(-url,-timedelta,-weekday_is_saturday,-weekday_is_sunday)
-df
-```
 ## Spliting the data into train and test set
-```{r}
+```{r splitting}
+set.seed(52)
+# Get the indexes for training data
 train_size <- sample(nrow(df), nrow(df)*0.7)
+# Get training data
 train_df <- df[train_size,]
+# Get test data
 test_df <- df[-train_size,] 
 ```
 
-## Summarization
+## Summarizations
+## Summary tables
+```{r}
+response_table <- as.array(summary(train_df$shares))
+response_table %>%
+  kbl(caption="Summary table for response variable") %>%
+  kable_classic(full_width = F)
+```
+
 ```{r}
 summary(train_df$num_imgs)
 summary(train_df$n_unique_tokens)
@@ -97,4 +110,36 @@ plot_3
 ```{r}
 #This is a comment
 ```
+
+## Plots
+### Response variable analysis
+```{r}
+ggplot(train_df,aes(shares)) + 
+  geom_histogram(fill='darkred')
+
+# Creating categorical form of response variable
+train_df$popularity <-qcut(train_df$shares,
+                           cuts=5,
+                           label=c('Low','Average','Good','High','Very High'))
+```
+
+### Sentiment plots
+```{r}
+ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ geom_point(aes(color=popularity)) + geom_smooth(method="lm",color='black')
+
+ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ geom_point(aes(color=popularity)) + geom_smooth(method="lm",color='black')
+```
+
+### Correlation plot
+```{r}
+all_corr = cor(select_if(train_df, is.numeric), method = c("spearman"))
+correlated_varaibles <- findCorrelation(all_corr,cutoff = 0.8,verbose = FALSE,names = TRUE,exact = TRUE)
+
+
+corr_data1 <- train_df %>% select(correlated_varaibles)
+corr1 = cor(corr_data1,method = c("spearman"))
+corrplot(corr1,diag=FALSE)
+```
+
+# Modeling
 
