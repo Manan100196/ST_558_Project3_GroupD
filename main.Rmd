@@ -194,4 +194,31 @@ corrplot(corr1,diag=FALSE)
 ```
 
 # Modeling
+## Linear regression
+```{r}
+set.seed(111)
+tr_ctrl <- trainControl(method = "repeatedcv")
+lm_forward_fit <- train(shares ~ ., data = train_df, preProcess = c("center", "scale"), method = "leapForward", tuneGrid = expand.grid(nvmax = seq(1, 55, 2)), trControl = tr_ctrl)
+plot(lm_forward_fit)
+
+min(lm_forward_fit$results$RMSE)
+which.min(lm_forward_fit$results$RMSE)
+```
+
+## Boosting
+```{r}
+set.seed(111)
+boost_fit <- train(
+shares ~ .,
+data = train_df,
+method = 'gbm',
+preProcess = c("center", "scale"),
+trControl = tr_ctrl,
+verbose = FALSE
+)
+
+min(boost_fit$results$RMSE)
+which.min(boost_fit$results$RMSE)
+```
+
 
