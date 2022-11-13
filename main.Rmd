@@ -4,7 +4,7 @@ author: "Rohan Prabhune, Manan Shah"
 output: 
   github_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
 always_allow_html: true
 ---
 ```{r Temp1,echo=FALSE,eval=TRUE,message=FALSE,warning=FALSE}
@@ -18,6 +18,7 @@ library(caret)
 library(kableExtra)
 library(corrplot)
 library(timereg)
+library(randomForest)
 ```
 
 # Reading the data:
@@ -39,7 +40,7 @@ dataset
 # Vector of columns other than data_channel_is*
 remaining_cols = c(names(dataset))[c(1:13,20:61)]
 # Subset based on type of article
-input_data_channel = "entertainment"
+input_data_channel = "world"
 select_var = paste0("data_channel_is_",input_data_channel)
 subset_cols = append(remaining_cols,select_var)
 # Subset data
@@ -194,4 +195,66 @@ corrplot(corr1,diag=FALSE)
 ```
 
 # Modeling
+## Variable selection
+```{r}
+# Removing newly added variables for EDA
+train_df2 <- train_df %>% select(-day,-image_grouped,-popularity,-is_weekend)
+# Removing highly correlated variables
+train_df2 <- train_df2 %>% select(-n_non_stop_words,-kw_min_max,
+                                  -self_reference_max_shares,-rate_positive_words,
+                                  -n_unique_tokens,-global_rate_negative_words,
+                                  -kw_min_min,-kw_avg_min,
+                                  -self_reference_avg_sharess)
+```
+## Correlation plot after removing highly correlated variables
+```{r}
+all_corr2 = cor(select_if(train_df2, is.numeric), method = c("spearman"))
+correlated_varaibles2 <- findCorrelation(all_corr2,cutoff = 0.8,
+                                        verbose=FALSE,names=TRUE,exact=TRUE)
+
+if (length(correlated_varaibles2) > 1) { 
+  corr_data2 <- train_df2 %>% select(correlated_varaibles2)
+  corr2 = cor(corr_data2,method = c("spearman"))
+  corrplot(corr2,diag=FALSE)
+}else {
+  print("Not enough variables above threshold value to generate a correlation plot")
+}
+
+```
+
+## Ensemble Tree-Based Models
+### Random Forest
+#### PCA
+```{r}
+train_df <- train_df2
+# Get the principal components
+PC <- prcomp(select(train_df,-shares),scale = TRUE)
+#Screenplot
+screeplot(PC,npcs=length(PC$sdev),type = "lines")
+```
+
+#### Training
+```{r}
+pca_train_data <- as_tibble(predict(PC,select(train_df,-shares))) %>%
+  select(PC1:PC10) %>% 
+  bind_cols(select(train_df,shares))
+
+rfFit <- train(shares ~ ., data = pca_train_data,
+               method = "rf",
+               family = "poisson",
+               trControl = trainControl(method = "repeatedcv",number = 3),
+               tuneGrid = data.frame(mtry = ncol(pca_train_data)/3)) 
+```
+
+#### Testing and Model Evaluation
+```{r}
+#Testing
+pca_test_data <- as_tibble(predict(PC,select(test_df,-shares))) %>%
+  select(PC1:PC10)
+rfPred <- predict(rfFit, newdata = pca_test_data)
+#Model Evaluation
+postResample(rfPred, test_df$shares)
+```
+
+
 
