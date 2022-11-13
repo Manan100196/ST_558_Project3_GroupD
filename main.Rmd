@@ -4,12 +4,14 @@ author: "Rohan Prabhune, Manan Shah"
 output: 
   github_document:
     toc: true
-    toc_depth: 2
+    toc_depth: 3
 always_allow_html: true
 ---
 ```{r Temp1,echo=FALSE,eval=TRUE,message=FALSE,warning=FALSE}
 knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,warning=FALSE) 
 ```
+
+# Introduction
 
 # Loading the necessary packages
 ```{r packages}
@@ -68,9 +70,9 @@ train_df <- df[train_size,]
 test_df <- df[-train_size,] 
 ```
 
-## Summarizations
+# Summarizations
 ## Summary tables
-```{r}
+```{r summary_table_predictor}
 # Creating summaries for some numerical variables
 df_summary <- train_df %>%
   select(num_imgs,num_videos,num_hrefs,n_unique_tokens, num_videos,num_keywords,
@@ -81,7 +83,7 @@ predictor_table %>%
   kable_classic(full_width = F)
 ```
 
-```{r}
+```{r summary_table_response}
 response_table <- as.array(summary(train_df$shares))
 response_table %>%
   kbl(caption="Summary table for response variable") %>%
@@ -89,7 +91,7 @@ response_table %>%
 ```
 
 ## Contingency tables
-```{r}
+```{r Contingency_tables}
 # Create a categorical "day" column
 train_df$day <- ifelse(train_df$weekday_is_monday == 1, "Mon",
                 ifelse(train_df$weekday_is_tuesday == 1, "Tues",
@@ -123,8 +125,8 @@ contingency_2 %>%
 ```
 
 ## Plots
-### Response variable analysis
-```{r}
+#### Response variable analysis
+```{r plot1}
 ggplot(train_df,aes(shares)) + 
   geom_histogram(fill='darkred')
 
@@ -134,8 +136,8 @@ train_df$popularity <-qcut(train_df$shares,
                            label=c('Low','Average','Good','High','Very High'))
 ```
 
-### Number of shares per day
-```{r}
+#### Number of shares per day
+```{r plot2}
 data_plot_1 <- train_df %>% 
   select(day, shares) %>% 
   group_by(day) %>% 
@@ -147,8 +149,8 @@ ggplot(data = data_plot_1, aes(day, Num_Of_Shares)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-### Number of shares per number of keywords in metadata
-```{r}
+#### Number of shares per number of keywords in metadata
+```{r plot3}
 data_plot_2 <- train_df %>% 
   select(shares, num_keywords,popularity)
 
@@ -158,8 +160,8 @@ ggplot(data_plot_2, aes(num_keywords, shares)) +
   labs(x="Number of keywords in metadata",y="Number OF Shares")
 ```
 
-### Average number of shares per words in title
-```{r}
+#### Average number of shares per words in title
+```{r plot4}
 data_plot_3 <- train_df %>% 
   select(n_tokens_title, shares) %>% 
   group_by(n_tokens_title) %>% 
@@ -170,8 +172,8 @@ ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) +
   labs(x="Number of words in the title",y="Average number of shares")
 ```
 
-### Sentiment plots
-```{r}
+#### Sentiment plots
+```{r plot5}
 ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
   geom_smooth(method="lm",color='black')
@@ -181,8 +183,8 @@ ggplot(train_df, aes(avg_negative_polarity,log(shares)))+
   geom_smooth(method="lm",color='black')
 ```
 
-### Correlation plot
-```{r}
+#### Correlation plot
+```{r plot6}
 all_corr = cor(select_if(train_df, is.numeric), method = c("spearman"))
 correlated_varaibles <- findCorrelation(all_corr,cutoff = 0.8,
                                         verbose=FALSE,names=TRUE,exact=TRUE)
@@ -192,37 +194,11 @@ corr_data1 <- train_df %>% select(correlated_varaibles)
 corr1 = cor(corr_data1,method = c("spearman"))
 corrplot(corr1,diag=FALSE)
 ```
+<!---------------------------------------------------------------------------->  
 
-# Modeling
-## Linear regression
-```{r}
-set.seed(111)
-tr_ctrl <- trainControl(method = "repeatedcv")
-lm_forward_fit <- train(shares ~ ., data = train_df, preProcess = c("center", "scale"), method = "leapForward", tuneGrid = expand.grid(nvmax = seq(1, 55, 2)), trControl = tr_ctrl)
-plot(lm_forward_fit)
-
-min(lm_forward_fit$results$RMSE)
-which.min(lm_forward_fit$results$RMSE)
-```
-
-## Boosting
-```{r}
-set.seed(111)
-boost_fit <- train(
-shares ~ .,
-data = train_df,
-method = 'gbm',
-preProcess = c("center", "scale"),
-trControl = tr_ctrl,
-verbose = FALSE
-)
-
-min(boost_fit$results$RMSE)
-which.min(boost_fit$results$RMSE)
-```
-
-## Variable selection
-```{r}
+# Modeling  
+#### Variable selection
+```{r var_selection}
 # Removing newly added variables for EDA
 train_df2 <- train_df %>% select(-day,-image_grouped,-popularity,-is_weekend)
 # Removing highly correlated variables
@@ -232,38 +208,70 @@ train_df2 <- train_df2 %>% select(-n_non_stop_words,-kw_min_max,
                                   -kw_min_min,-kw_avg_min,
                                   -self_reference_avg_sharess)
 ```
-## Correlation plot after removing highly correlated variables
-```{r}
+#### Correlation plot after removing highly correlated variables
+```{r plot_after_var_selection}
 all_corr2 = cor(select_if(train_df2, is.numeric), method = c("spearman"))
 correlated_varaibles2 <- findCorrelation(all_corr2,cutoff = 0.8,
                                         verbose=FALSE,names=TRUE,exact=TRUE)
 
 if (length(correlated_varaibles2) > 1) { 
-  corr_data2 <- train_df2 %>% select(correlated_varaibles2)
+  corr_data2 <- train_df2 %>% select(all_of(correlated_varaibles2))
   corr2 = cor(corr_data2,method = c("spearman"))
   corrplot(corr2,diag=FALSE)
 }else {
   print("Not enough variables above threshold value to generate a correlation plot")
 }
+```
 
+## Linear regression
+### Forward Selection
+```{r forward_selection_train,warning=FALSE,message=FALSE}
+set.seed(111)
+
+tr_ctrl <- trainControl(method = "repeatedcv")
+lm_forward_fit <- train(shares ~ ., data = train_df2,
+                        preProcess = c("center", "scale"),
+                        method = "leapForward",
+                        tuneGrid = expand.grid(nvmax = seq(1,42,2)),
+                        trControl = tr_ctrl)
+
+min(lm_forward_fit$results$RMSE)
+which.min(lm_forward_fit$results$RMSE)
+plot(lm_forward_fit)
+```
+
+### Backward Selection
+```{r backward_selection_train,warning=FALSE,message=FALSE}
+set.seed(111)
+
+tr_ctrl <- trainControl(method = "repeatedcv",number=3)
+lm_backward_fit <- train(shares ~ ., data = train_df2,
+                        preProcess = c("center", "scale"),
+                        method = "leapBackward",
+                        tuneGrid = expand.grid(nvmax = seq(1,42,2)),
+                        trControl = tr_ctrl)
+
+min(lm_backward_fit$results$RMSE)
+which.min(lm_backward_fit$results$RMSE)
+plot(lm_backward_fit)
 ```
 
 ## Ensemble Tree-Based Models
 ### Random Forest
 #### PCA
-```{r}
-train_df <- train_df2
+```{r pca}
+set.seed(111)
 # Get the principal components
-PC <- prcomp(select(train_df,-shares),scale = TRUE)
+PC <- prcomp(select(train_df2,-shares),scale = TRUE)
 #Screenplot
 screeplot(PC,npcs=length(PC$sdev),type = "lines")
 ```
 
 #### Training
-```{r}
-pca_train_data <- as_tibble(predict(PC,select(train_df,-shares))) %>%
+```{r random_forest_training}
+pca_train_data <- as_tibble(predict(PC,select(train_df2,-shares))) %>%
   select(PC1:PC10) %>% 
-  bind_cols(select(train_df,shares))
+  bind_cols(select(train_df2,shares))
 
 rfFit <- train(shares ~ ., data = pca_train_data,
                method = "rf",
@@ -272,12 +280,51 @@ rfFit <- train(shares ~ ., data = pca_train_data,
                tuneGrid = data.frame(mtry = ncol(pca_train_data)/3)) 
 ```
 
-#### Testing and Model Evaluation
-```{r}
-#Testing
+### Boosting
+```{r boosting_train}
+set.seed(111)
+boost_fit <- train(shares ~ .,data = train_df2,
+                   method = 'gbm',
+                   preProcess = c("center", "scale"),
+                   trControl = tr_ctrl,
+                   verbose = FALSE)
+
+min(boost_fit$results$RMSE)
+which.min(boost_fit$results$RMSE)
+```
+
+# Model evaluation on test set
+#### Forward selection
+```{r forward_test}
+# Forward Selection
+lm_forward_pred <- predict(lm_forward_fit,newdata=select(test_df,-shares))
+forward_rmse <- sqrt(mean((lm_forward_pred-test_df$shares)^2))
+postResample(lm_forward_pred,test_df$shares)
+```
+
+#### Backward Selection
+```{r backward_test}
+# Backward Selection
+lm_backward_pred <- predict(lm_backward_fit,newdata=select(test_df,-shares))
+backward_rmse <- sqrt(mean((lm_backward_pred-test_df$shares)^2))
+postResample(lm_backward_pred,test_df$shares)
+```
+
+#### Random Forest
+```{r random_forest_test}
+#Random Forest
 pca_test_data <- as_tibble(predict(PC,select(test_df,-shares))) %>%
   select(PC1:PC10)
-rfPred <- predict(rfFit, newdata = pca_test_data)
-#Model Evaluation
-postResample(rfPred, test_df$shares)
+
+rfPred <- predict(rfFit, newdata = pca_test_data,type = "raw")
+rf_rmse <- sqrt(mean((rfPred-test_df$shares)^2))
+postResample(rfPred,test_df$shares)
+```
+
+#### Boosted Tree
+```{r boosted_test}
+# Boosted Tree
+boosted_pred <- predict(boost_fit,newdata=select(test_df,-shares))
+boosted_rmse <- sqrt(mean((boosted_pred-test_df$shares)^2))
+postResample(boosted_pred,test_df$shares)
 ```
