@@ -54,6 +54,7 @@ Filter the tibble based on n_tokens_content and n_tokens_title that is, where nu
 #Remove url and timedelta and filter on data
 df <- df %>% select(-url,-timedelta) %>% filter(n_tokens_content!=0,n_tokens_title!=0)
 df
+names(df)
 ```
 
 ## Spliting the data into train and test set
@@ -90,15 +91,21 @@ response_table %>%
 ## Contingency tables
 ```{r}
 # Create a categorical "day" column
-train_df$day <- ifelse(train_df$weekday_is_monday == 1, "Mon", ifelse(train_df$weekday_is_tuesday == 1, "Tues", ifelse(train_df$weekday_is_wednesday == 1, "Wed", ifelse(train_df$weekday_is_thursday == 1, "Thurs",
-ifelse(train_df$weekday_is_friday == 1, "Fri", 
-ifelse(train_df$weekday_is_saturday == 1, "Sat",
-ifelse(train_df$weekday_is_sunday == 1, "Sun","NA")))))))
+train_df$day <- ifelse(train_df$weekday_is_monday == 1, "Mon",
+                ifelse(train_df$weekday_is_tuesday == 1, "Tues",
+                ifelse(train_df$weekday_is_wednesday == 1, "Wed", 
+                ifelse(train_df$weekday_is_thursday == 1, "Thurs",
+                ifelse(train_df$weekday_is_friday == 1, "Fri",
+                ifelse(train_df$weekday_is_saturday == 1, "Sat",
+                ifelse(train_df$weekday_is_sunday == 1, "Sun","NA")))))))
 train_df$day <- ordered(as.factor(train_df$day),
                         levels = c("Mon","Tues","Wed","Thurs","Fri","Sat","Sun"))
 
 # Create a categorical "image_grouped" column
-train_df$image_grouped <- ifelse(train_df$num_imgs %in% c(0:25), "1-25", ifelse(train_df$num_imgs %in% c(26:50), "26-50", ifelse(train_df$num_imgs %in% c(51:75), "51-75", ifelse(train_df$num_imgs %in% c(76:101), "76-100","100+"))))
+train_df$image_grouped <- ifelse(train_df$num_imgs %in% c(0:25), "1-25",
+                          ifelse(train_df$num_imgs %in% c(26:50), "26-50",
+                          ifelse(train_df$num_imgs %in% c(51:75), "51-75",
+                          ifelse(train_df$num_imgs %in% c(76:101), "76-100","100+"))))
 train_df$image_grouped <- ordered(as.factor(train_df$image_grouped),
                         levels = c("1-25","26-50","51-75","76-100","100+"))
 
@@ -127,7 +134,7 @@ train_df$popularity <-qcut(train_df$shares,
                            label=c('Low','Average','Good','High','Very High'))
 ```
 
-### 
+### Number of shares per day
 ```{r}
 data_plot_1 <- train_df %>% 
   select(day, shares) %>% 
@@ -140,37 +147,45 @@ ggplot(data = data_plot_1, aes(day, Num_Of_Shares)) +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-###
+### Number of shares per number of keywords in metadata
 ```{r}
 data_plot_2 <- train_df %>% 
-  select(shares, num_keywords)
+  select(shares, num_keywords,popularity)
 
 ggplot(data_plot_2, aes(num_keywords, shares)) + 
   geom_point() + 
-  geom_jitter(aes(col = shares))
+  geom_jitter(aes(col = shares))+
+  labs(x="Number of keywords in metadata",y="Number OF Shares")
 ```
 
-###
+### Average number of shares per words in title
 ```{r}
 data_plot_3 <- train_df %>% 
   select(n_tokens_title, shares) %>% 
   group_by(n_tokens_title) %>% 
   summarise(mean_token_title = mean(shares))
 
-ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) + geom_line()
+ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) + 
+  geom_line() +
+  labs(x="Number of words in the title",y="Average number of shares")
 ```
 
 ### Sentiment plots
 ```{r}
-ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ geom_point(aes(color=popularity)) + geom_smooth(method="lm",color='black')
+ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ 
+  geom_point(aes(color=popularity)) + 
+  geom_smooth(method="lm",color='black')
 
-ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ geom_point(aes(color=popularity)) + geom_smooth(method="lm",color='black')
+ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ 
+  geom_point(aes(color=popularity)) + 
+  geom_smooth(method="lm",color='black')
 ```
 
 ### Correlation plot
 ```{r}
 all_corr = cor(select_if(train_df, is.numeric), method = c("spearman"))
-correlated_varaibles <- findCorrelation(all_corr,cutoff = 0.8,verbose = FALSE,names = TRUE,exact = TRUE)
+correlated_varaibles <- findCorrelation(all_corr,cutoff = 0.8,
+                                        verbose=FALSE,names=TRUE,exact=TRUE)
 
 
 corr_data1 <- train_df %>% select(correlated_varaibles)
