@@ -36,6 +36,10 @@ Rohan Prabhune, Manan Shah
 
 # Introduction
 
+The data set describes the features of each individual channel. The
+purpose of the analysis is to predict the performance of each individual
+channel.
+
 # Loading the necessary packages
 
 ``` r
@@ -63,6 +67,12 @@ dataset
 # Pre-processing:
 
 ## Subset data based on type of article
+
+Here, `remaining_cols` is used to store the column names other than the
+**data_channel_is\_** columns. These will be appended to the column
+selected for the type of channel. We get the appended result in
+`subset_cols`. The dataset is then filtered on the columns in
+subset_cols and where the data_channel_is\_\* column values are 1.
 
 ``` r
 # Vector of columns other than data_channel_is*
@@ -119,6 +129,10 @@ names(df)
 
 ## Spliting the data into train and test set
 
+The entire data set is divided into training and testing data set. This
+is done in order to perform exploratory data analysis and modelling on
+train data and later evaluate the performance on the unseen test data.
+
 ``` r
 set.seed(52)
 # Get the indexes for training data
@@ -132,6 +146,11 @@ test_df <- df[-train_size,]
 # Summarizations
 
 ## Summary tables
+
+Here, the column wise summary of important variables such as number of
+images, number of videos, number of unique tokens etc. is generated for
+the train data. This helps us evaluate the distribution of the
+variables.
 
 ``` r
 # Creating summaries for some numerical variables
@@ -335,6 +354,10 @@ Max.
 </tbody>
 </table>
 
+This table helps us understand the numerical summary for the response
+variable. From this we can find out minimum, maximum, median and
+quantile values for the response variable.
+
 ``` r
 response_table <- as.array(summary(train_df$shares))
 response_table %>%
@@ -409,6 +432,12 @@ Max.
 </table>
 
 ## Contingency tables
+
+The training data already has dummy variables generated. The variable
+weekday\_ is\_\* is grouped into day and a two way contingency table of
+day vs number of keywords is generated. The number of images is
+converted into categorical variable from a quantitative variable and a
+two way contigency table of day vs image grouped is created.
 
 ``` r
 # Create a categorical "day" column
@@ -859,6 +888,13 @@ Sun
 
 #### Response variable analysis
 
+The histogram below helps in understanding the distribution of the
+response variable. If the histogram is centered around the mean, then we
+can say that the distribution is normal. However if it is to the left or
+the right, then we can infer that the distribution is skewed in which
+case we can consider log of the response variable to estimate the linear
+model.
+
 ``` r
 ggplot(train_df,aes(shares)) + 
   geom_histogram(fill='darkred')
@@ -920,11 +956,17 @@ ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) +
 
 #### Sentiment plots
 
+These plots attempt to find the trend of log of shares as a function of
+average positive and average negative polarity. If we see that the
+number of shares increases or decrease with the increase in the polarity
+of the content, then we can infer the trend from the slope of the linear
+regression line on the plots given below.
+
 ``` r
 ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
   geom_smooth(method="lm",color='black')+
-  labs(x="Average positive polarity",y="log(Number of shares)")
+  labs(x="Average positive polarity",y="Log Number of shares")
 ```
 
 <img src="Lifestyle_analysis_files/figure-gfm/plot5-1.png" style="display: block; margin: auto;" />
@@ -933,12 +975,18 @@ ggplot(train_df, aes(avg_positive_polarity,log(shares)))+
 ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
   geom_smooth(method="lm",color='black')+
-  labs(x="Average negative polarity",y="log(Number of shares)")
+  labs(x="Average negative polarity",y="Log Number of shares")
 ```
 
 <img src="Lifestyle_analysis_files/figure-gfm/plot5-2.png" style="display: block; margin: auto;" />
 
 #### Correlation plot
+
+This plot is used to identify the highly correlated predictor variables.
+A big blue dot signifies variables having high positive correlation
+while a big red dot signifies a high negative correlation. This plots
+helps in removing the highly correlated variables from the model as
+including them will increase the variability in prediction.
 
 ``` r
 all_corr = cor(select_if(train_df, is.numeric), method = c("spearman"))
@@ -946,7 +994,7 @@ correlated_varaibles <- findCorrelation(all_corr,cutoff = 0.8,
                                         verbose=FALSE,names=TRUE,exact=TRUE)
 
 
-corr_data1 <- train_df %>% select(correlated_varaibles)
+corr_data1 <- train_df %>% select(all_of(correlated_varaibles))
 corr1 = cor(corr_data1,method = c("spearman"))
 corrplot(corr1,diag=FALSE)
 ```
@@ -957,6 +1005,12 @@ corrplot(corr1,diag=FALSE)
 # Modeling
 
 #### Variable selection
+
+First the variables which were added as a part of exploratory data
+analysis were removed. Following that, the variables which are highly
+correlated are removed. These are the variables which are highly
+correlated in all the six subsets (based on the data_channel_is\*
+values).
 
 ``` r
 # Removing newly added variables for EDA
@@ -970,6 +1024,9 @@ train_df2 <- train_df2 %>% select(-n_non_stop_words,-kw_min_max,
 ```
 
 #### Correlation plot after removing highly correlated variables
+
+This plot is used to confirm if we no longer have highly correlated
+variables in our dataset before we fit different models on the data.
 
 ``` r
 all_corr2 = cor(select_if(train_df2, is.numeric), method = c("spearman"))
@@ -1040,7 +1097,6 @@ pca_train_data <- as_tibble(predict(PC,select(train_df2,-shares))) %>%
 
 rfFit <- train(shares ~ ., data = pca_train_data,
                method = "rf",
-               family = "poisson",
                trControl = trainControl(method = "repeatedcv",number = 3),
                tuneGrid = data.frame(mtry = ncol(pca_train_data)/3)) 
 ```

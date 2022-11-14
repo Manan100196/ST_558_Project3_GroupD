@@ -7,7 +7,7 @@ output:
     toc_depth: 3
 always_allow_html: true
 params:
-  var: "tech"
+  var: "entertainment"
 ---
 ```{r Temp1,echo=FALSE,eval=TRUE,message=FALSE,warning=FALSE}
 knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,warning=FALSE) 
@@ -40,6 +40,7 @@ dataset
 
 # Pre-processing:  
 ## Subset data based on type of article
+Here, `remaining_cols` is used to store the column names other than the **data_channel_is_** columns. These will be appended to the column selected for the type of channel. We get the appended result in `subset_cols`. The dataset is then filtered on the columns in subset_cols and where the data_channel_is_* column values are 1.  
 ```{r preprocessing}
 # Vector of columns other than data_channel_is*
 remaining_cols = c(names(dataset))[c(1:13,20:61)]
@@ -89,6 +90,7 @@ predictor_table %>%
   kable_classic(full_width = F)
 ```
 
+This table helps us understand the numerical summary for the response variable. From this we can find out minimum, maximum, median and quantile values for the response variable.  
 ```{r summary_table_response}
 response_table <- as.array(summary(train_df$shares))
 response_table %>%
@@ -132,7 +134,8 @@ contingency_2 %>%
 ```
 
 ## Plots
-#### Response variable analysis
+#### Response variable analysis  
+The histogram below helps in understanding the distribution of the response variable. If the histogram is centered around the mean, then we can say that the distribution is normal. However if it is to the left or the right, then we can infer that the distribution is skewed in which case we can consider log of the response variable to estimate the linear model.  
 ```{r plot1}
 ggplot(train_df,aes(shares)) + 
   geom_histogram(fill='darkred')
@@ -179,27 +182,29 @@ ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) +
   labs(x="Number of words in the title",y="Average number of shares")
 ```
 
-#### Sentiment plots
+#### Sentiment plots  
+These plots attempt to find the trend of log of shares as a function of average positive and average negative polarity. If we see that the number of shares increases or decrease with the increase in the polarity of the content, then we can infer the trend from the slope of the linear regression line on the plots given below.  
 ```{r plot5}
 ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
   geom_smooth(method="lm",color='black')+
-  labs(x="Average positive polarity",y="log(Number of shares)")
+  labs(x="Average positive polarity",y="Log Number of shares")
 
 ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
   geom_smooth(method="lm",color='black')+
-  labs(x="Average negative polarity",y="log(Number of shares)")
+  labs(x="Average negative polarity",y="Log Number of shares")
 ```
 
 #### Correlation plot
+This plot is used to identify the highly correlated predictor variables. A big blue dot signifies variables having high positive correlation while a big red dot signifies a high negative correlation. This plots helps in removing the highly correlated variables from the model as including them will increase the variability in prediction.  
 ```{r plot6}
 all_corr = cor(select_if(train_df, is.numeric), method = c("spearman"))
 correlated_varaibles <- findCorrelation(all_corr,cutoff = 0.8,
                                         verbose=FALSE,names=TRUE,exact=TRUE)
 
 
-corr_data1 <- train_df %>% select(correlated_varaibles)
+corr_data1 <- train_df %>% select(all_of(correlated_varaibles))
 corr1 = cor(corr_data1,method = c("spearman"))
 corrplot(corr1,diag=FALSE)
 ```
@@ -207,6 +212,7 @@ corrplot(corr1,diag=FALSE)
 
 # Modeling  
 #### Variable selection
+First the variables which were added as a part of exploratory data analysis were removed. Following that, the variables which are highly correlated are removed. These are the variables which are highly correlated in all the six subsets (based on the data_channel_is* values). 
 ```{r var_selection}
 # Removing newly added variables for EDA
 train_df2 <- train_df %>% select(-day,-image_grouped,-popularity,-is_weekend)
@@ -217,7 +223,9 @@ train_df2 <- train_df2 %>% select(-n_non_stop_words,-kw_min_max,
                                   -kw_min_min,-kw_avg_min,
                                   -self_reference_avg_sharess)
 ```
-#### Correlation plot after removing highly correlated variables
+
+#### Correlation plot after removing highly correlated variables  
+This plot is used to confirm if we no longer have highly correlated variables in our dataset before we fit different models on the data.  
 ```{r plot_after_var_selection}
 all_corr2 = cor(select_if(train_df2, is.numeric), method = c("spearman"))
 correlated_varaibles2 <- findCorrelation(all_corr2,cutoff = 0.8,
@@ -277,7 +285,6 @@ pca_train_data <- as_tibble(predict(PC,select(train_df2,-shares))) %>%
 
 rfFit <- train(shares ~ ., data = pca_train_data,
                method = "rf",
-               family = "poisson",
                trControl = trainControl(method = "repeatedcv",number = 3),
                tuneGrid = data.frame(mtry = ncol(pca_train_data)/3)) 
 ```
