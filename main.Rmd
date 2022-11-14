@@ -14,6 +14,7 @@ knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,war
 ```
 
 # Introduction
+The data set describes the features of each individual channel. The purpose of the analysis is to predict the performance of each individual channel.  
 
 # Loading the necessary packages
 ```{r packages}
@@ -63,6 +64,7 @@ names(df)
 ```
 
 ## Spliting the data into train and test set
+The entire data set is divided into training and testing data set. This is done in order to perform exploratory data analysis and modelling on train data and later evaluate the performance on the unseen test data.
 ```{r splitting}
 set.seed(52)
 # Get the indexes for training data
@@ -75,6 +77,7 @@ test_df <- df[-train_size,]
 
 # Summarizations
 ## Summary tables
+Here, the column wise summary of important variables such as number of images, number of videos, number of unique tokens etc. is generated for the train data. This helps us evaluate the distribution of the variables.
 ```{r summary_table_predictor}
 # Creating summaries for some numerical variables
 df_summary <- train_df %>%
@@ -94,6 +97,7 @@ response_table %>%
 ```
 
 ## Contingency tables
+The training data already has dummy variables generated. The variable weekday_ is_* is grouped into day and a two way contingency table of day vs number of keywords is generated. The number of images is converted into categorical variable from a quantitative variable and a two way contigency table of day vs image grouped is created.
 ```{r Contingency_tables}
 # Create a categorical "day" column
 train_df$day <- ifelse(train_df$weekday_is_monday == 1, "Mon",
