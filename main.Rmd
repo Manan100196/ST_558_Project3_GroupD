@@ -6,6 +6,8 @@ output:
     toc: true
     toc_depth: 3
 always_allow_html: true
+params:
+  var: "tech"
 ---
 ```{r Temp1,echo=FALSE,eval=TRUE,message=FALSE,warning=FALSE}
 knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,warning=FALSE) 
@@ -31,6 +33,7 @@ September, Coimbra, Portugal.*
 
 ```{r Data}
 #Reading the data
+print(params$var)
 dataset <- read_csv("data/OnlineNewsPopularity.csv",show_col_types=FALSE) 
 dataset
 ```
@@ -41,7 +44,7 @@ dataset
 # Vector of columns other than data_channel_is*
 remaining_cols = c(names(dataset))[c(1:13,20:61)]
 # Subset based on type of article
-input_data_channel = "entertainment"
+input_data_channel = params$var
 select_var = paste0("data_channel_is_",input_data_channel)
 subset_cols = append(remaining_cols,select_var)
 # Subset data
@@ -225,7 +228,7 @@ if (length(correlated_varaibles2) > 1) {
 
 ## Linear regression
 ### Forward Selection
-```{r forward_selection_train,warning=FALSE,message=FALSE}
+```{r forward_selection_train,warning=FALSE,message=FALSE,results='hide'}
 set.seed(111)
 
 tr_ctrl <- trainControl(method = "repeatedcv")
@@ -238,7 +241,7 @@ lm_forward_fit <- train(shares ~ ., data = train_df2,
 ```
 
 ### Backward Selection
-```{r backward_selection_train,warning=FALSE,message=FALSE}
+```{r backward_selection_train,warning=FALSE,message=FALSE,results='hide'}
 set.seed(111)
 
 tr_ctrl <- trainControl(method = "repeatedcv",number=3)
@@ -319,7 +322,8 @@ boosted_rmse <- sqrt(mean((boosted_pred-test_df$shares)^2))
 postResample(boosted_pred,test_df$shares)
 ```
 
-```{r}
+#### Model evaluation
+```{r model_evaluation}
 model_method <- c("Forward Selection", "Backward Selection", "Random Forest", "Boosted Tree")
 model_rmse <- c(forward_rmse, backward_rmse, rf_rmse, boosted_rmse)
 
