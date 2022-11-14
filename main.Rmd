@@ -32,8 +32,7 @@ of the 17th EPIA 2015 - Portuguese Conference on Artificial Intelligence,
 September, Coimbra, Portugal.*
 
 ```{r Data}
-#Reading the data
-print(params$var)
+# Reading the data
 dataset <- read_csv("data/OnlineNewsPopularity.csv",show_col_types=FALSE) 
 dataset
 ```
@@ -56,9 +55,10 @@ df <- dataset %>% select(all_of(subset_cols)) %>%
 Removing url and timedelta as they are non-predictive variables.
 Filter the tibble based on n_tokens_content and n_tokens_title that is, where number of words in the content and title are not zero.  
 ```{r preprocessing2}
-#Remove url and timedelta and filter on data
+# Remove url and timedelta and filter on data
 df <- df %>% select(-url,-timedelta) %>% filter(n_tokens_content!=0,n_tokens_title!=0)
 df
+# Column names
 names(df)
 ```
 
@@ -179,11 +179,13 @@ ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) +
 ```{r plot5}
 ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
-  geom_smooth(method="lm",color='black')
+  geom_smooth(method="lm",color='black')+
+  labs(x="Average positive polarity",y="log(Number of shares)")
 
 ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
-  geom_smooth(method="lm",color='black')
+  geom_smooth(method="lm",color='black')+
+  labs(x="Average negative polarity",y="log(Number of shares)")
 ```
 
 #### Correlation plot

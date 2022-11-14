@@ -55,37 +55,10 @@ of the 17th EPIA 2015 - Portuguese Conference on Artificial
 Intelligence, September, Coimbra, Portugal.*
 
 ``` r
-#Reading the data
-print(params$var)
-```
-
-    ## [1] "lifestyle"
-
-``` r
+# Reading the data
 dataset <- read_csv("data/OnlineNewsPopularity.csv",show_col_types=FALSE) 
 dataset
 ```
-
-    ## # A tibble: 39,644 × 61
-    ##    url        timed…¹ n_tok…² n_tok…³ n_uni…⁴ n_non…⁵ n_non…⁶ num_h…⁷ num_s…⁸ num_i…⁹ num_v…˟ avera…˟ num_k…˟
-    ##    <chr>        <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
-    ##  1 http://ma…     731      12     219   0.664    1.00   0.815       4       2       1       0    4.68       5
-    ##  2 http://ma…     731       9     255   0.605    1.00   0.792       3       1       1       0    4.91       4
-    ##  3 http://ma…     731       9     211   0.575    1.00   0.664       3       1       1       0    4.39       6
-    ##  4 http://ma…     731       9     531   0.504    1.00   0.666       9       0       1       0    4.40       7
-    ##  5 http://ma…     731      13    1072   0.416    1.00   0.541      19      19      20       0    4.68       7
-    ##  6 http://ma…     731      10     370   0.560    1.00   0.698       2       2       0       0    4.36       9
-    ##  7 http://ma…     731       8     960   0.418    1.00   0.550      21      20      20       0    4.65      10
-    ##  8 http://ma…     731      12     989   0.434    1.00   0.572      20      20      20       0    4.62       9
-    ##  9 http://ma…     731      11      97   0.670    1.00   0.837       2       0       0       0    4.86       7
-    ## 10 http://ma…     731      10     231   0.636    1.00   0.797       4       1       1       1    5.09       5
-    ## # … with 39,634 more rows, 48 more variables: data_channel_is_lifestyle <dbl>,
-    ## #   data_channel_is_entertainment <dbl>, data_channel_is_bus <dbl>, data_channel_is_socmed <dbl>,
-    ## #   data_channel_is_tech <dbl>, data_channel_is_world <dbl>, kw_min_min <dbl>, kw_max_min <dbl>,
-    ## #   kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>, kw_avg_max <dbl>, kw_min_avg <dbl>,
-    ## #   kw_max_avg <dbl>, kw_avg_avg <dbl>, self_reference_min_shares <dbl>, self_reference_max_shares <dbl>,
-    ## #   self_reference_avg_sharess <dbl>, weekday_is_monday <dbl>, weekday_is_tuesday <dbl>,
-    ## #   weekday_is_wednesday <dbl>, weekday_is_thursday <dbl>, weekday_is_friday <dbl>, …
 
 # Pre-processing:
 
@@ -109,54 +82,40 @@ the tibble based on n_tokens_content and n_tokens_title that is, where
 number of words in the content and title are not zero.
 
 ``` r
-#Remove url and timedelta and filter on data
+# Remove url and timedelta and filter on data
 df <- df %>% select(-url,-timedelta) %>% filter(n_tokens_content!=0,n_tokens_title!=0)
 df
-```
-
-    ## # A tibble: 2,077 × 53
-    ##    n_tokens…¹ n_tok…² n_uni…³ n_non…⁴ n_non…⁵ num_h…⁶ num_s…⁷ num_i…⁸ num_v…⁹ avera…˟ num_k…˟ kw_mi…˟ kw_ma…˟
-    ##         <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
-    ##  1          8     960   0.418    1.00   0.550      21      20      20       0    4.65      10       0       0
-    ##  2         10     187   0.667    1.00   0.800       7       0       1       0    4.66       7       0       0
-    ##  3         11     103   0.689    1.00   0.806       3       1       1       0    4.84       6       0       0
-    ##  4         10     243   0.619    1.00   0.824       1       1       0       0    4.38      10       0       0
-    ##  5          8     204   0.586    1.00   0.698       7       2       1       0    4.67       8       0       0
-    ##  6         11     315   0.551    1.00   0.702       4       4       1       0    4.38      10       0       0
-    ##  7         10    1190   0.409    1.00   0.561      25      24      20       0    4.62       8       0       0
-    ##  8          6     374   0.641    1.00   0.828       7       0       1       0    4.91       8       0       0
-    ##  9         12     499   0.513    1.00   0.662      14       1       1       0    5.08      10     217    1500
-    ## 10         11     223   0.662    1.00   0.826       5       3       0       0    4.55       6     217    1900
-    ## # … with 2,067 more rows, 40 more variables: kw_avg_min <dbl>, kw_min_max <dbl>, kw_max_max <dbl>,
-    ## #   kw_avg_max <dbl>, kw_min_avg <dbl>, kw_max_avg <dbl>, kw_avg_avg <dbl>, self_reference_min_shares <dbl>,
-    ## #   self_reference_max_shares <dbl>, self_reference_avg_sharess <dbl>, weekday_is_monday <dbl>,
-    ## #   weekday_is_tuesday <dbl>, weekday_is_wednesday <dbl>, weekday_is_thursday <dbl>,
-    ## #   weekday_is_friday <dbl>, weekday_is_saturday <dbl>, weekday_is_sunday <dbl>, is_weekend <dbl>,
-    ## #   LDA_00 <dbl>, LDA_01 <dbl>, LDA_02 <dbl>, LDA_03 <dbl>, LDA_04 <dbl>, global_subjectivity <dbl>,
-    ## #   global_sentiment_polarity <dbl>, global_rate_positive_words <dbl>, global_rate_negative_words <dbl>, …
-
-``` r
+# Column names
 names(df)
 ```
 
-    ##  [1] "n_tokens_title"               "n_tokens_content"             "n_unique_tokens"             
-    ##  [4] "n_non_stop_words"             "n_non_stop_unique_tokens"     "num_hrefs"                   
-    ##  [7] "num_self_hrefs"               "num_imgs"                     "num_videos"                  
-    ## [10] "average_token_length"         "num_keywords"                 "kw_min_min"                  
-    ## [13] "kw_max_min"                   "kw_avg_min"                   "kw_min_max"                  
-    ## [16] "kw_max_max"                   "kw_avg_max"                   "kw_min_avg"                  
-    ## [19] "kw_max_avg"                   "kw_avg_avg"                   "self_reference_min_shares"   
-    ## [22] "self_reference_max_shares"    "self_reference_avg_sharess"   "weekday_is_monday"           
-    ## [25] "weekday_is_tuesday"           "weekday_is_wednesday"         "weekday_is_thursday"         
-    ## [28] "weekday_is_friday"            "weekday_is_saturday"          "weekday_is_sunday"           
-    ## [31] "is_weekend"                   "LDA_00"                       "LDA_01"                      
-    ## [34] "LDA_02"                       "LDA_03"                       "LDA_04"                      
-    ## [37] "global_subjectivity"          "global_sentiment_polarity"    "global_rate_positive_words"  
-    ## [40] "global_rate_negative_words"   "rate_positive_words"          "rate_negative_words"         
-    ## [43] "avg_positive_polarity"        "min_positive_polarity"        "max_positive_polarity"       
-    ## [46] "avg_negative_polarity"        "min_negative_polarity"        "max_negative_polarity"       
-    ## [49] "title_subjectivity"           "title_sentiment_polarity"     "abs_title_subjectivity"      
-    ## [52] "abs_title_sentiment_polarity" "shares"
+    ##  [1] "n_tokens_title"               "n_tokens_content"            
+    ##  [3] "n_unique_tokens"              "n_non_stop_words"            
+    ##  [5] "n_non_stop_unique_tokens"     "num_hrefs"                   
+    ##  [7] "num_self_hrefs"               "num_imgs"                    
+    ##  [9] "num_videos"                   "average_token_length"        
+    ## [11] "num_keywords"                 "kw_min_min"                  
+    ## [13] "kw_max_min"                   "kw_avg_min"                  
+    ## [15] "kw_min_max"                   "kw_max_max"                  
+    ## [17] "kw_avg_max"                   "kw_min_avg"                  
+    ## [19] "kw_max_avg"                   "kw_avg_avg"                  
+    ## [21] "self_reference_min_shares"    "self_reference_max_shares"   
+    ## [23] "self_reference_avg_sharess"   "weekday_is_monday"           
+    ## [25] "weekday_is_tuesday"           "weekday_is_wednesday"        
+    ## [27] "weekday_is_thursday"          "weekday_is_friday"           
+    ## [29] "weekday_is_saturday"          "weekday_is_sunday"           
+    ## [31] "is_weekend"                   "LDA_00"                      
+    ## [33] "LDA_01"                       "LDA_02"                      
+    ## [35] "LDA_03"                       "LDA_04"                      
+    ## [37] "global_subjectivity"          "global_sentiment_polarity"   
+    ## [39] "global_rate_positive_words"   "global_rate_negative_words"  
+    ## [41] "rate_positive_words"          "rate_negative_words"         
+    ## [43] "avg_positive_polarity"        "min_positive_polarity"       
+    ## [45] "max_positive_polarity"        "avg_negative_polarity"       
+    ## [47] "min_negative_polarity"        "max_negative_polarity"       
+    ## [49] "title_subjectivity"           "title_sentiment_polarity"    
+    ## [51] "abs_title_subjectivity"       "abs_title_sentiment_polarity"
+    ## [53] "shares"
 
 ## Spliting the data into train and test set
 
@@ -964,7 +923,8 @@ ggplot(data_plot_3, aes(n_tokens_title, mean_token_title)) +
 ``` r
 ggplot(train_df, aes(avg_positive_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
-  geom_smooth(method="lm",color='black')
+  geom_smooth(method="lm",color='black')+
+  labs(x="Average positive polarity",y="log(Number of shares)")
 ```
 
 <img src="Lifestyle_analysis_files/figure-gfm/plot5-1.png" style="display: block; margin: auto;" />
@@ -972,7 +932,8 @@ ggplot(train_df, aes(avg_positive_polarity,log(shares)))+
 ``` r
 ggplot(train_df, aes(avg_negative_polarity,log(shares)))+ 
   geom_point(aes(color=popularity)) + 
-  geom_smooth(method="lm",color='black')
+  geom_smooth(method="lm",color='black')+
+  labs(x="Average negative polarity",y="log(Number of shares)")
 ```
 
 <img src="Lifestyle_analysis_files/figure-gfm/plot5-2.png" style="display: block; margin: auto;" />
