@@ -235,9 +235,6 @@ lm_forward_fit <- train(shares ~ ., data = train_df2,
                         tuneGrid = expand.grid(nvmax = seq(1,42,2)),
                         trControl = tr_ctrl)
 
-min(lm_forward_fit$results$RMSE)
-which.min(lm_forward_fit$results$RMSE)
-plot(lm_forward_fit)
 ```
 
 ### Backward Selection
@@ -250,10 +247,6 @@ lm_backward_fit <- train(shares ~ ., data = train_df2,
                         method = "leapBackward",
                         tuneGrid = expand.grid(nvmax = seq(1,42,2)),
                         trControl = tr_ctrl)
-
-min(lm_backward_fit$results$RMSE)
-which.min(lm_backward_fit$results$RMSE)
-plot(lm_backward_fit)
 ```
 
 ## Ensemble Tree-Based Models
@@ -288,9 +281,6 @@ boost_fit <- train(shares ~ .,data = train_df2,
                    preProcess = c("center", "scale"),
                    trControl = tr_ctrl,
                    verbose = FALSE)
-
-min(boost_fit$results$RMSE)
-which.min(boost_fit$results$RMSE)
 ```
 
 # Model evaluation on test set
@@ -327,4 +317,14 @@ postResample(rfPred,test_df$shares)
 boosted_pred <- predict(boost_fit,newdata=select(test_df,-shares))
 boosted_rmse <- sqrt(mean((boosted_pred-test_df$shares)^2))
 postResample(boosted_pred,test_df$shares)
+```
+
+```{r}
+model_method <- c("Forward Selection", "Backward Selection", "Random Forest", "Boosted Tree")
+model_rmse <- c(forward_rmse, backward_rmse, rf_rmse, boosted_rmse)
+
+model_result <- data.frame(model_method, model_rmse)
+
+winner <- paste("The winner that is best model among all is ", model_result[which.min(model_result$model_rmse), 1], " as it has lowest RMSE value of ", round(min(model_result$model_rmse), 2))
+winner
 ```
