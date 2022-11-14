@@ -271,6 +271,7 @@ lm_backward_fit <- train(shares ~ ., data = train_df2,
 Random Forest extend the idea of Bagging, where we get bootstrapped samples, fit a regression tree to each sample and then average their predictions. In random forest, instead of using every predictor in each of the trees, we select a random subset of predictors to make sure the trees are not correlated. 
 `train_df2` consists of 41 predictor variables and using then makes the model computationally expensive. Hence we have done PCA to get linear combinations of those 41 variables that account most of the variability in the dataset. Looking at the elbow point, we decided to go with the first ten principal components for our analysis.  
 For Random Forest we have used cross-validation and the number of randomly selected predictor variables for each tree is p/3 (since its a regression problem).  
+
 #### PCA
 ```{r pca}
 set.seed(111)
