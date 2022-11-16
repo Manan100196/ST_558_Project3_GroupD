@@ -950,10 +950,9 @@ train_df$popularity <-qcut(train_df$shares,
 
 #### Number of shares per day
 
-A bar plot of number of shares vs Days of the week is generated. The
-conclusion is that the number of shares are high during weekdays
-specially on Monday and Wednesday. The shares decreases during the
-weekend.
+A bar plot of number of shares vs Days of the week is generated. This
+graph helps us conclude that for which particular days, there is a high
+number of shares for a particular channel.
 
 ``` r
 data_plot_1 <- train_df %>% 
@@ -972,8 +971,8 @@ ggplot(data = data_plot_1, aes(day, Num_Of_Shares)) +
 #### Number of shares vs number of keywords in metadata
 
 Here, a graph of number of keywords vs number of shares is generated.
-From the plot, the conclusion is that there is low probability of high
-number of shares with high number of keywords in metadata.
+This plot provides a conclusion whether increasing the number of
+keywords in metadata increases the number of shares or not.
 
 ``` r
 data_plot_2 <- train_df %>% 
@@ -990,8 +989,9 @@ ggplot(data_plot_2, aes(num_keywords, shares)) +
 #### Average number of shares per words in title
 
 Here, a plot of average number of shares vs number of words in the title
-is generated. The conclusion is for the words in the title in the range
-of 7 to 14, the average number of shares is high.
+is generated. Title is an important part and it is key to have adequate
+number and key words in the title. The plot helps us conclude whether
+the number of words in the title drives the number of shares.
 
 ``` r
 data_plot_3 <- train_df %>% 
