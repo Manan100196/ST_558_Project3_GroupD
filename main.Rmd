@@ -14,7 +14,7 @@ knitr::opts_chunk$set(fig.align = 'center',echo=TRUE,eval=TRUE,message=FALSE,war
 ```
 
 # Introduction
-The data set describes the features of each individual channel. The purpose of the analysis is to predict the performance of each individual channel.  
+The data set describes the features (token details, keywords, day of the week etc) for each record and a particular channel. The purpose of the analysis is to predict the performance of each individual channel. The channel performance is measured by the number of shares which in modelling context is the response variable. The url for each record and time delta which is days between article publication are removed as they are not useful in predicting shares. There are few variables such as n_non_stop_words, kw_min_max, self_reference_max_shares, rate_positive_words, n_unique_tokens, global_rate_negative_words, kw_min_min,kw_avg_min, self_reference_avg_sharess which are highly correlated in all six channel are removed before performing applying any modelling technique. Finally, four modelling methodologies which are forward subset linear regression, backward subset linear regression, and ensemble technique such as random forest and boosting are fitted on the training dataset. To evaluate the model fit, the testing is performed on the test dataset and RMSE value is calculated. These RMSE value is compared for all four models and the one with lowest RMSE value is declared as a winner for a particular channel.
 
 # Loading the necessary packages
 ```{r packages}
@@ -306,7 +306,7 @@ rfFit <- train(shares ~ ., data = pca_train_data,
 ```
 
 ### Boosting
-
+Similar to random forest, boosting is an ensemble machine learning method. In this method, a residual is calculated at each step and in the next step the residual is taken as a response variable. The predicted residual is multiplied with the learning rate $\alpha$. The equation takes the form y = $\bar{x}$ + $\alpha$ * (predicted residual). The alpha value is kept low and in absence of alpha, there will be overfitting. This process is repeated number of times and the response variable is predicted. 
 ```{r boosting_train}
 set.seed(111)
 boost_fit <- train(shares ~ .,data = train_df2,
