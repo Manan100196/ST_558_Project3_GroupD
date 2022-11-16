@@ -147,7 +147,7 @@ train_df$popularity <-qcut(train_df$shares,
 ```
 
 #### Number of shares per day
-A bar plot of number of shares vs Days of the week is generated. The conclusion is that the number of shares are high during weekdays specially on Mopnday and Wednesday. The shares decsreases during the weekend.
+A bar plot of number of shares vs Days of the week is generated. The conclusion is that the number of shares are high during weekdays specially on Monday and Wednesday. The shares decreases during the weekend.
 ```{r plot2}
 data_plot_1 <- train_df %>% 
   select(day, shares) %>% 

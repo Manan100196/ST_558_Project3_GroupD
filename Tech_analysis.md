@@ -36,9 +36,24 @@ Rohan Prabhune, Manan Shah
 
 # Introduction
 
-The data set describes the features of each individual channel. The
-purpose of the analysis is to predict the performance of each individual
-channel.
+The data set describes the features (token details, keywords, day of the
+week etc) for each record and a particular channel. The purpose of the
+analysis is to predict the performance of each individual channel. The
+channel performance is measured by the number of shares which in
+modelling context is the response variable. The url for each record and
+time delta which is days between article publication are removed as they
+are not useful in predicting shares. There are few variables such as
+n_non_stop_words, kw_min_max, self_reference_max_shares,
+rate_positive_words, n_unique_tokens, global_rate_negative_words,
+kw_min_min,kw_avg_min, self_reference_avg_sharess which are highly
+correlated in all six channel are removed before performing applying any
+modelling technique. Finally, four modelling methodologies which are
+forward subset linear regression, backward subset linear regression, and
+ensemble technique such as random forest and boosting are fitted on the
+training dataset. To evaluate the model fit, the testing is performed on
+the test dataset and RMSE value is calculated. These RMSE value is
+compared for all four models and the one with lowest RMSE value is
+declared as a winner for a particular channel.
 
 # Loading the necessary packages
 
@@ -935,6 +950,11 @@ train_df$popularity <-qcut(train_df$shares,
 
 #### Number of shares per day
 
+A bar plot of number of shares vs Days of the week is generated. The
+conclusion is that the number of shares are high during weekdays
+specially on Monday and Wednesday. The shares decreases during the
+weekend.
+
 ``` r
 data_plot_1 <- train_df %>% 
   select(day, shares) %>% 
@@ -949,7 +969,11 @@ ggplot(data = data_plot_1, aes(day, Num_Of_Shares)) +
 
 <img src="Tech_analysis_files/figure-gfm/plot2-1.png" style="display: block; margin: auto;" />
 
-#### Number of shares per number of keywords in metadata
+#### Number of shares vs number of keywords in metadata
+
+Here, a graph of number of keywords vs number of shares is generated.
+From the plot, the conclusion is that there is low probability of high
+number of shares with high number of keywords in metadata.
 
 ``` r
 data_plot_2 <- train_df %>% 
@@ -964,6 +988,10 @@ ggplot(data_plot_2, aes(num_keywords, shares)) +
 <img src="Tech_analysis_files/figure-gfm/plot3-1.png" style="display: block; margin: auto;" />
 
 #### Average number of shares per words in title
+
+Here, a plot of average number of shares vs number of words in the title
+is generated. The conclusion is for the words in the title in the range
+of 7 to 14, the average number of shares is high.
 
 ``` r
 data_plot_3 <- train_df %>% 
@@ -1070,7 +1098,31 @@ if (length(correlated_varaibles2) > 1) {
 
 ## Linear regression
 
+The linear regression model takes the form y = b<sub>o</sub> +
+b<sub>1</sub>x<sub>1</sub> + b<sub>2</sub>x<sub>2</sub> + e. The x’s are
+the independent variable called predictor and the y is dependent
+variable called as response. The key assumption of linear regression
+are: 1. The variance of the error term (e) is constant and it’s expected
+value is 0. 2. The error term (e) is normally distributed. 3. The
+predictor variables are uncorrelated with each other. Linear regression
+is one such machine learning model which has less flexibility but has
+high interpretability due to it is a highly preferred method in
+regulated institutions such as banks. In order to account for non linear
+relationship, square and cubic terms of predictor are used. Interaction
+terms in the form of x<sub>1</sub>\*x<sub>2</sub> are used to account
+for dependency in predicting the response. The key aspect of linear
+regression is to select a group of features that best describes the
+response. Below, two methods of feature selection are done.
+
 ### Forward Selection
+
+In forward subset selection, on top of a constant value there is
+addition of variable which best describes the response. That is, after a
+constant is determined, a variable from the available list of p
+variables (say x<sub>1</sub>) is added. Next, a variable from the list
+of p-1 variable which along with the variable x1 (say x<sub>2</sub>) is
+added. The best model among all is selected based on AIC, BIC and
+adjusted r-sqaure values explained in best subset selection.
 
 ``` r
 set.seed(111)
@@ -1084,6 +1136,12 @@ lm_forward_fit <- train(shares ~ ., data = train_df2,
 ```
 
 ### Backward Selection
+
+The backward stepwise selection is reverse of forward stepwise
+selection. In this method, all the p variables are selected. next, one
+variable is removed at each step without which the response variable is
+best calculated. The best model among all is selected based on AIC, BIC
+and adjusted r-squaure values.
 
 ``` r
 set.seed(111)
@@ -1141,6 +1199,15 @@ rfFit <- train(shares ~ ., data = pca_train_data,
 
 ### Boosting
 
+Similar to random forest, boosting is an ensemble machine learning
+method. In this method, a residual is calculated at each step and in the
+next step the residual is taken as a response variable. The predicted
+residual is multiplied with the learning rate $\alpha$. The equation
+takes the form y = $\bar{x}$ + $\alpha$ \* (predicted residual). The
+alpha value is kept low and in absence of alpha, there will be
+overfitting. This process is repeated number of times and the response
+variable is predicted.
+
 ``` r
 set.seed(111)
 boost_fit <- train(shares ~ .,data = train_df2,
@@ -1152,17 +1219,20 @@ boost_fit <- train(shares ~ .,data = train_df2,
 
 # Model evaluation on test set
 
+For each of the model fitted and trained above on training data, the
+prediction is done on the test data set using the train model for each
+method. Finally, RMSE value on testing data is calculated and compared
+across all four models. For comparison a dataframe of modelling method
+against it’s RMSE value. the one with lowest RMSE value is selected as a
+winner.
+
 #### Forward selection
 
 ``` r
 # Forward Selection
 lm_forward_pred <- predict(lm_forward_fit,newdata=select(test_df,-shares))
 forward_rmse <- sqrt(mean((lm_forward_pred-test_df$shares)^2))
-postResample(lm_forward_pred,test_df$shares)
 ```
-
-    ##         RMSE     Rsquared          MAE 
-    ## 4.026692e+03 1.535103e-02 2.258218e+03
 
 #### Backward Selection
 
@@ -1170,11 +1240,7 @@ postResample(lm_forward_pred,test_df$shares)
 # Backward Selection
 lm_backward_pred <- predict(lm_backward_fit,newdata=select(test_df,-shares))
 backward_rmse <- sqrt(mean((lm_backward_pred-test_df$shares)^2))
-postResample(lm_backward_pred,test_df$shares)
 ```
-
-    ##         RMSE     Rsquared          MAE 
-    ## 4.026132e+03 2.961436e-02 2.233183e+03
 
 #### Random Forest
 
@@ -1185,11 +1251,7 @@ pca_test_data <- as_tibble(predict(PC,select(test_df,-shares))) %>%
 
 rfPred <- predict(rfFit, newdata = pca_test_data,type = "raw")
 rf_rmse <- sqrt(mean((rfPred-test_df$shares)^2))
-postResample(rfPred,test_df$shares)
 ```
-
-    ##         RMSE     Rsquared          MAE 
-    ## 4.481192e+03 1.528009e-03 2.456021e+03
 
 #### Boosted Tree
 
@@ -1197,11 +1259,7 @@ postResample(rfPred,test_df$shares)
 # Boosted Tree
 boosted_pred <- predict(boost_fit,newdata=select(test_df,-shares))
 boosted_rmse <- sqrt(mean((boosted_pred-test_df$shares)^2))
-postResample(boosted_pred,test_df$shares)
 ```
-
-    ##         RMSE     Rsquared          MAE 
-    ## 4.356542e+03 3.601987e-03 2.298204e+03
 
 #### Model evaluation
 
@@ -1210,6 +1268,7 @@ model_method <- c("Forward Selection", "Backward Selection", "Random Forest", "B
 model_rmse <- c(forward_rmse, backward_rmse, rf_rmse, boosted_rmse)
 
 model_result <- data.frame(model_method, model_rmse)
+model_result
 
 winner <- paste("The winner that is best model among all is ", model_result[which.min(model_result$model_rmse), 1], " as it has lowest RMSE value of ", round(min(model_result$model_rmse), 2))
 winner
